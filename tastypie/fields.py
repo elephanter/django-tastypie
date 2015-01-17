@@ -644,7 +644,7 @@ class RelatedField(ApiField):
         Accepts either a URI, a data dictionary (or dictionary-like structure)
         or an object with a ``pk``.
         """
-        self.fk_resource = self.to_class()
+        fk_resource = self.to_class()
         kwargs = {
             'request': request,
             'related_obj': related_obj,
@@ -656,15 +656,15 @@ class RelatedField(ApiField):
             return value
         elif isinstance(value, six.string_types):
             # We got a URI. Load the object and assign it.
-            return self.resource_from_uri(self.fk_resource, value, **kwargs)
+            return self.resource_from_uri(fk_resource, value, **kwargs)
         elif hasattr(value, 'items'):
             # We've got a data dictionary.
             # Since this leads to creation, this is the only one of these
             # methods that might care about "parent" data.
-            return self.resource_from_data(self.fk_resource, value, **kwargs)
+            return self.resource_from_data(fk_resource, value, **kwargs)
         elif hasattr(value, 'pk'):
             # We've got an object with a primary key.
-            return self.resource_from_pk(self.fk_resource, value, **kwargs)
+            return self.resource_from_pk(fk_resource, value, **kwargs)
         else:
             raise ApiFieldError("The '%s' field was given data that was not a URI, not a dictionary-alike and does not have a 'pk' attribute: %s." % (self.instance_name, value))
 
@@ -719,23 +719,23 @@ class ToOneField(RelatedField):
                     foreign_obj = getattr(foreign_obj, attr, None)
                 except ObjectDoesNotExist:
                     foreign_obj = None
-        
+
         elif callable(self.attribute):
             previous_obj = bundle.obj
             foreign_obj = self.attribute(bundle)
-            
+
         if not foreign_obj:
             if not self.null:
                 if callable(self.attribute):
                     raise ApiFieldError("The related resource for resource %s could not be found." % (previous_obj))
                 else:
                     raise ApiFieldError("The model '%r' has an empty attribute '%s' and doesn't allow a null value." % (previous_obj, attr))
-            
-            return None        
 
-        self.fk_resource = self.get_related_resource(foreign_obj)
+            return None
+
+        fk_resource = self.get_related_resource(foreign_obj)
         fk_bundle = Bundle(obj=foreign_obj, request=bundle.request)
-        return self.dehydrate_related(fk_bundle, self.fk_resource, for_list=for_list)
+        return self.dehydrate_related(fk_bundle, fk_resource, for_list=for_list)
 
     def hydrate(self, bundle):
         value = super(ToOneField, self).hydrate(bundle)
